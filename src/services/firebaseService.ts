@@ -26,7 +26,9 @@ import {
   TokenCategory,
   TokenStatus,
   TokenType,
-} from "../types";
+} from "../types.ts";
+
+const { app, auth, db, analytics } = initFirebase();
 
 // Use environment variables for config
 const firebaseConfig = {
@@ -39,16 +41,31 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
-let app, auth, db, analytics;
+function initFirebase() {
+  if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+    console.warn(
+      "Firebase config missing. Ensure .env has VITE_FIREBASE_* keys and you've restarted the dev server."
+    );
+  }
 
-try {
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
-  const analytics = getAnalytics(app);
-} catch (error) {
-  console.error("Firebase initialization error:", error);
-  throw error;
+  try {
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    let analytics: ReturnType<typeof getAnalytics> | undefined;
+    if (typeof window !== "undefined") {
+      try {
+        analytics = getAnalytics(app);
+      } catch (err) {
+        // Analytics can fail in some environments; not fatal
+        console.warn("Firebase analytics not initialized:", err);
+      }
+    }
+    return { app, auth, db, analytics };
+  } catch (error) {
+    console.error("Firebase initialization error:", error);
+    throw error;
+  }
 }
 
 async function mapFirebaseUser(firebaseUser: FirebaseUser): Promise<User> {
