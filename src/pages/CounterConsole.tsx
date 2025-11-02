@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { firebaseService } from '../services/firebaseService';
-import { Token, TokenCategory } from '../types';
+import { type Token, TokenCategory } from '../types';
 import Spinner from '../components/Spinner';
 
 const CategoryBadge: React.FC<{ category: TokenCategory }> = ({ category }) => {

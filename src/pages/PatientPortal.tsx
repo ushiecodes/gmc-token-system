@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { DEPARTMENTS, TOKEN_GENERATION_START_HOUR } from "../constants";
-import { Token, TokenCategory } from "../types";
+import { type Token, TokenCategory } from "../types";
 import { firebaseService } from "../services/firebaseService";
 import Spinner from "../components/Spinner";
 

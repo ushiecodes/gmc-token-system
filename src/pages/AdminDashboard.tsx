@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { firebaseService } from '../services/firebaseService';
-import { Token, TokenCategory } from '../types';
+import { type Token, TokenCategory } from '../types';
 import StatCard from '../components/StatCard';
 import Spinner from '../components/Spinner';
 

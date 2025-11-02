@@ -21,9 +21,9 @@ import {
 import { getAnalytics } from "firebase/analytics";
 
 import {
-  User,
+  type User,
   UserRole,
-  Token,
+  type Token,
   TokenCategory,
   TokenStatus,
   TokenType,

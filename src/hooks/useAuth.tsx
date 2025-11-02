@@ -3,10 +3,10 @@ import React, {
   useContext,
   useState,
   useEffect,
-  ReactNode,
+  type ReactNode,
 } from "react";
 import { firebaseService } from "../services/firebaseService";
-import { User } from "../types";
+import type { User } from "../types";
 import Spinner from "../components/Spinner";
 
 interface AuthContextType {
