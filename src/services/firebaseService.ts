@@ -28,6 +28,7 @@ import {
   TokenType,
 } from "../types";
 
+// Use environment variables for config
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -38,11 +39,15 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const analytics = getAnalytics(app);
+try {
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const analytics = getAnalytics(app);
+} catch (error) {
+  console.error("Firebase initialization error:", error);
+  throw error;
+}
 
 async function mapFirebaseUser(firebaseUser: FirebaseUser): Promise<User> {
   try {
@@ -233,5 +238,20 @@ export const firebaseService = {
     });
     token.id = docRef.id;
     return token;
+  },
+
+  testFirebaseConnection: async () => {
+    try {
+      // Test Firestore
+      await getDocs(collection(db, "tokens"));
+
+      // Test Auth
+      const currentUser = auth.currentUser;
+      console.log("Firebase connection test successful");
+      return true;
+    } catch (error) {
+      console.error("Firebase connection test failed:", error);
+      return false;
+    }
   },
 };

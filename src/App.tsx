@@ -4,55 +4,40 @@ import { AuthProvider, useAuth } from "./hooks/useAuth";
 import Layout from "./components/Layout";
 import AuthGuard from "./components/AuthGuard";
 import { UserRole } from "./types";
+import { Suspense } from "react";
+import Spinner from "./components/Spinner";
 
-// Create placeholder pages for now
-const Login: React.FC = () => <div>Login Page</div>; // Will be replaced
-const CounterConsole: React.FC = () => <div>Counter Console</div>;
-const AdminDashboard: React.FC = () => <div>Admin Dashboard</div>;
-
-// Import the real pages
-import LoginPage from "./pages/Login";
-import PatientPortalPage from "./pages/PatientPortal";
+// Page imports
+import PatientPortal from "./pages/PatientPortal";
+import Login from "./pages/Login";
+import CounterConsole from "./pages/CounterConsole";
+import AdminDashboard from "./pages/AdminDashboard";
 
 const AppRoutes: React.FC = () => {
-  const { user } = useAuth();
-
   return (
-    <Routes>
-      <Route path="/" element={<PatientPortalPage />} />
-      <Route
-        path="/login"
-        element={
-          user ? (
-            <Navigate
-              to={user.role === UserRole.Admin ? "/admin" : "/counter"}
-            />
-          ) : (
-            <LoginPage />
-          )
-        }
-      />
-
-      <Route
-        path="/counter"
-        element={
-          <AuthGuard roles={[UserRole.Counter]}>
-            <CounterConsole />
-          </AuthGuard>
-        }
-      />
-
-      <Route
-        path="/admin"
-        element={
-          <AuthGuard roles={[UserRole.Admin]}>
-            <AdminDashboard />
-          </AuthGuard>
-        }
-      />
-
-      <Route path="*" element={<Navigate to="/" />} />
-    </Routes>
+    <Suspense fallback={<Spinner />}>
+      <Routes>
+        <Route path="/" element={<PatientPortal />} />
+        <Route path="/login" element={<Login />} />
+        <Route
+          path="/counter"
+          element={
+            <AuthGuard roles={[UserRole.Counter]}>
+              <CounterConsole />
+            </AuthGuard>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <AuthGuard roles={[UserRole.Admin]}>
+              <AdminDashboard />
+            </AuthGuard>
+          }
+        />
+        <Route path="*" element={<Navigate to="/" />} />
+      </Routes>
+    </Suspense>
   );
 };
 
