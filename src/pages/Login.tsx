@@ -21,8 +21,7 @@ const Login: React.FC = () => {
       else navigate("/counter");
     } catch (err: any) {
       setError(
-        err.message +
-          ' (Hint: Use "counter@gmc.com" or "admin@gmc.com" with password "password123")'
+        `Login failed. Please check your email and password. (Hint: Use "counter@gmc.com" or "admin@gmc.com" with password "password123")`
       );
     } finally {
       setIsLoading(false);

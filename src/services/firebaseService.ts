@@ -17,6 +17,7 @@ import {
   doc,
   onSnapshot,
   getDoc,
+  setDoc,
 } from "firebase/firestore";
 import { getAnalytics } from "firebase/analytics";
 
@@ -76,14 +77,27 @@ const { app, auth, db, analytics } = initFirebase();
 
 async function mapFirebaseUser(firebaseUser: FirebaseUser): Promise<User> {
   try {
-    const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
-    if (!userDoc.exists()) throw new Error("User not found in database");
-    const userData = userDoc.data();
-    return {
-      uid: firebaseUser.uid,
-      email: firebaseUser.email || "",
-      role: userData.role as UserRole,
-    };
+    const userDocRef = doc(db, "users", firebaseUser.uid);
+    const userDoc = await getDoc(userDocRef);
+
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      return {
+        uid: firebaseUser.uid,
+        email: firebaseUser.email || "",
+        role: userData.role as UserRole,
+      };
+    } else {
+      // If user doc doesn't exist, create one
+      const role = firebaseUser.email === "admin@gmc.com" ? UserRole.Admin : UserRole.Counter;
+      const newUser: User = {
+        uid: firebaseUser.uid,
+        email: firebaseUser.email || "",
+        role,
+      };
+      await setDoc(userDocRef, newUser);
+      return newUser;
+    }
   } catch (error) {
     console.error("Error mapping user:", error);
     throw new Error("Failed to load user data");
@@ -173,7 +187,7 @@ export const firebaseService = {
     return snapshot.docs.map((doc) => ({ ...doc.data(), id: doc.id })) as Token[];
   },
 
-  onTokensChanged(callback: (tokens: Token[]) => void) {
+  listenToTokens(callback: (tokens: Token[]) => void) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const q = query(
@@ -194,17 +208,23 @@ export const firebaseService = {
     await updateDoc(tokenDoc, { status });
   },
 
-  async addWalkInToken(
+  async updateTokenCategory(tokenId: string, category: TokenCategory): Promise<void> {
+    const tokenDoc = doc(db, "tokens", tokenId);
+    await updateDoc(tokenDoc, { category });
+  },
+
+  async generateWalkInToken(
     casePaperId: string,
     department: string,
     category: TokenCategory = TokenCategory.General
   ): Promise<Token> {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    const dateStr = today.toISOString().slice(0, 10);
     const q = query(
       collection(db, "tokens"),
       where("tokenPrefix", "==", "W"),
-      where("dateStr", "==", today.toISOString().slice(0, 10))
+      where("dateStr", "==", dateStr)
     );
     const snapshot = await getDocs(q);
     const walkInTokens = snapshot.docs.map((doc) => doc.data());
@@ -228,7 +248,7 @@ export const firebaseService = {
 
     const docRef = await addDoc(collection(db, "tokens"), {
       ...token,
-      dateStr: today.toISOString().slice(0, 10),
+      dateStr,
     });
 
     token.id = docRef.id;

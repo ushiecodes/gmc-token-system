@@ -32,7 +32,7 @@ const CounterConsole: React.FC = () => {
 
   const handleIssueWalkIn = async () => {
     setIsIssuing(true);
-    await firebaseService.generateWalkInToken(walkInCaseId);
+    await firebaseService.generateWalkInToken(walkInCaseId, "", TokenCategory.General);
     setWalkInCaseId('');
     setIsIssuing(false);
   };
