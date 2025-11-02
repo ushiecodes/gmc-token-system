@@ -4,7 +4,7 @@ import {
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
-  User as FirebaseUser,
+  type User as FirebaseUser,
 } from "firebase/auth";
 import {
   getFirestore,
@@ -38,6 +38,8 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
+
+let app, auth, db, analytics;
 
 try {
   const app = initializeApp(firebaseConfig);
