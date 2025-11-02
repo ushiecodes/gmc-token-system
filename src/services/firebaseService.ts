@@ -19,6 +19,7 @@ import {
   getDoc,
 } from "firebase/firestore";
 import { getAnalytics } from "firebase/analytics";
+
 import {
   User,
   UserRole,
@@ -26,11 +27,9 @@ import {
   TokenCategory,
   TokenStatus,
   TokenType,
-} from "../types.ts";
+} from "../types";
 
-const { app, auth, db, analytics } = initFirebase();
-
-// Use environment variables for config
+// ✅ Firebase config should be defined before initFirebase()
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -41,10 +40,11 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
+// ✅ Safe Firebase initialization
 function initFirebase() {
   if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
     console.warn(
-      "Firebase config missing. Ensure .env has VITE_FIREBASE_* keys and you've restarted the dev server."
+      "⚠️ Firebase config missing. Ensure .env has VITE_FIREBASE_* keys and you've restarted the dev server."
     );
   }
 
@@ -52,15 +52,16 @@ function initFirebase() {
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
+
     let analytics: ReturnType<typeof getAnalytics> | undefined;
     if (typeof window !== "undefined") {
       try {
         analytics = getAnalytics(app);
       } catch (err) {
-        // Analytics can fail in some environments; not fatal
         console.warn("Firebase analytics not initialized:", err);
       }
     }
+
     return { app, auth, db, analytics };
   } catch (error) {
     console.error("Firebase initialization error:", error);
@@ -68,12 +69,15 @@ function initFirebase() {
   }
 }
 
+// ✅ Initialize after definition
+const { app, auth, db, analytics } = initFirebase();
+
+// ---------- Utility functions ----------
+
 async function mapFirebaseUser(firebaseUser: FirebaseUser): Promise<User> {
   try {
     const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
-    if (!userDoc.exists()) {
-      throw new Error("User not found in database");
-    }
+    if (!userDoc.exists()) throw new Error("User not found in database");
     const userData = userDoc.data();
     return {
       uid: firebaseUser.uid,
@@ -86,37 +90,25 @@ async function mapFirebaseUser(firebaseUser: FirebaseUser): Promise<User> {
   }
 }
 
+// ---------- Main firebaseService API ----------
+
 export const firebaseService = {
-  // Authentication methods
-  login: async (email: string, pass: string): Promise<User> => {
-    try {
-      const result = await signInWithEmailAndPassword(auth, email, pass);
-      return await mapFirebaseUser(result.user);
-    } catch (error: any) {
-      console.error("Login error:", error);
-      throw new Error(error.message || "Login failed");
-    }
+  // Authentication
+  async login(email: string, pass: string): Promise<User> {
+    const result = await signInWithEmailAndPassword(auth, email, pass);
+    return await mapFirebaseUser(result.user);
   },
 
-  logout: async (): Promise<void> => {
-    try {
-      await signOut(auth);
-    } catch (error) {
-      console.error("Logout error:", error);
-      throw new Error("Logout failed");
-    }
+  async logout(): Promise<void> {
+    await signOut(auth);
   },
 
-  // Real-time auth state
-  onAuthStateChanged: (callback: (user: User | null) => void) => {
+  onAuthStateChanged(callback: (user: User | null) => void) {
     return onAuthStateChanged(auth, async (user) => {
+      if (!user) return callback(null);
       try {
-        if (user) {
-          const mappedUser = await mapFirebaseUser(user);
-          callback(mappedUser);
-        } else {
-          callback(null);
-        }
+        const mappedUser = await mapFirebaseUser(user);
+        callback(mappedUser);
       } catch (error) {
         console.error("Auth state change error:", error);
         callback(null);
@@ -124,83 +116,68 @@ export const firebaseService = {
     });
   },
 
-  // Token management methods
-  generateToken: async (
+  // Token Management
+  async generateToken(
     casePaperId: string,
     department: string,
     category: TokenCategory
-  ): Promise<Token> => {
-    try {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const dateStr = today.toISOString().slice(0, 10);
-
-      // Check for existing token
-      const existingQuery = query(
-        collection(db, "tokens"),
-        where("casePaperId", "==", casePaperId),
-        where("department", "==", department),
-        where("dateStr", "==", dateStr)
-      );
-      const existingDocs = await getDocs(existingQuery);
-      if (!existingDocs.empty) {
-        throw new Error("Token already exists for this case paper today");
-      }
-
-      // Get next token number
-      const tokensQuery = query(
-        collection(db, "tokens"),
-        where("tokenPrefix", "==", "G"),
-        where("dateStr", "==", dateStr)
-      );
-      const snapshot = await getDocs(tokensQuery);
-      const nextNum = snapshot.size + 1;
-
-      const token: Omit<Token, "id"> = {
-        tokenNumber: `G${nextNum}`,
-        tokenPrefix: "G",
-        numericPart: nextNum,
-        casePaperId,
-        department,
-        generatedAt: Date.now(),
-        category,
-        status: TokenStatus.Waiting,
-        type: TokenType.Digital,
-      };
-
-      const docRef = await addDoc(collection(db, "tokens"), {
-        ...token,
-        dateStr,
-      });
-
-      return { ...token, id: docRef.id };
-    } catch (error: any) {
-      console.error("Token generation error:", error);
-      throw new Error(error.message || "Failed to generate token");
-    }
-  },
-
-  getTokens: async (): Promise<Token[]> => {
+  ): Promise<Token> {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const tokensRef = collection(db, "tokens");
+    const dateStr = today.toISOString().slice(0, 10);
+
+    // Prevent duplicate tokens
+    const existingQuery = query(
+      collection(db, "tokens"),
+      where("casePaperId", "==", casePaperId),
+      where("department", "==", department),
+      where("dateStr", "==", dateStr)
+    );
+    const existingDocs = await getDocs(existingQuery);
+    if (!existingDocs.empty)
+      throw new Error("Token already exists for this case paper today");
+
+    // Compute next token number
+    const tokensQuery = query(
+      collection(db, "tokens"),
+      where("tokenPrefix", "==", "G"),
+      where("dateStr", "==", dateStr)
+    );
+    const snapshot = await getDocs(tokensQuery);
+    const nextNum = snapshot.size + 1;
+
+    const token: Omit<Token, "id"> = {
+      tokenNumber: `G${nextNum}`,
+      tokenPrefix: "G",
+      numericPart: nextNum,
+      casePaperId,
+      department,
+      generatedAt: Date.now(),
+      category,
+      status: TokenStatus.Waiting,
+      type: TokenType.Digital,
+    };
+
+    const docRef = await addDoc(collection(db, "tokens"), { ...token, dateStr });
+    return { ...token, id: docRef.id };
+  },
+
+  async getTokens(): Promise<Token[]> {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
     const q = query(
-      tokensRef,
+      collection(db, "tokens"),
       where("dateStr", "==", today.toISOString().slice(0, 10))
     );
     const snapshot = await getDocs(q);
-    return snapshot.docs.map((doc) => ({
-      ...doc.data(),
-      id: doc.id,
-    })) as Token[];
+    return snapshot.docs.map((doc) => ({ ...doc.data(), id: doc.id })) as Token[];
   },
 
-  onTokensChanged: (callback: (tokens: Token[]) => void) => {
+  onTokensChanged(callback: (tokens: Token[]) => void) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const tokensRef = collection(db, "tokens");
     const q = query(
-      tokensRef,
+      collection(db, "tokens"),
       where("dateStr", "==", today.toISOString().slice(0, 10))
     );
     return onSnapshot(q, (snapshot) => {
@@ -212,24 +189,20 @@ export const firebaseService = {
     });
   },
 
-  updateTokenStatus: async (
-    tokenId: string,
-    status: TokenStatus
-  ): Promise<void> => {
+  async updateTokenStatus(tokenId: string, status: TokenStatus): Promise<void> {
     const tokenDoc = doc(db, "tokens", tokenId);
     await updateDoc(tokenDoc, { status });
   },
 
-  addWalkInToken: async (
+  async addWalkInToken(
     casePaperId: string,
     department: string,
     category: TokenCategory = TokenCategory.General
-  ): Promise<Token> => {
+  ): Promise<Token> {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const tokensRef = collection(db, "tokens");
     const q = query(
-      tokensRef,
+      collection(db, "tokens"),
       where("tokenPrefix", "==", "W"),
       where("dateStr", "==", today.toISOString().slice(0, 10))
     );
@@ -239,6 +212,7 @@ export const firebaseService = {
       walkInTokens.length > 0
         ? Math.max(...walkInTokens.map((t: any) => t.numericPart)) + 1
         : 1;
+
     const token: Token = {
       id: "",
       tokenNumber: `W${nextNum}`,
@@ -251,22 +225,20 @@ export const firebaseService = {
       status: TokenStatus.Waiting,
       type: TokenType.WalkIn,
     };
-    const docRef = await addDoc(tokensRef, {
+
+    const docRef = await addDoc(collection(db, "tokens"), {
       ...token,
       dateStr: today.toISOString().slice(0, 10),
     });
+
     token.id = docRef.id;
     return token;
   },
 
-  testFirebaseConnection: async () => {
+  async testFirebaseConnection() {
     try {
-      // Test Firestore
       await getDocs(collection(db, "tokens"));
-
-      // Test Auth
-      const currentUser = auth.currentUser;
-      console.log("Firebase connection test successful");
+      console.log("✅ Firebase connection test successful");
       return true;
     } catch (error) {
       console.error("Firebase connection test failed:", error);
