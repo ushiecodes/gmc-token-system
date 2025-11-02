@@ -12,33 +12,41 @@ import Spinner from "../components/Spinner";
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  error: string | null;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
+  error: null,
 });
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
-    const unsubscribe = firebaseService.onAuthStateChanged((user) => {
-      setUser(user);
+    try {
+      const unsubscribe = firebaseService.onAuthStateChanged((user) => {
+        setUser(user);
+        setLoading(false);
+        setError(null);
+      });
+      return () => unsubscribe();
+    } catch (err: any) {
+      setError(err.message);
       setLoading(false);
-    });
-    return () => unsubscribe();
+    }
   }, []);
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-gray-100">
-        <Spinner />
-      </div>
-    );
+
+  if (error) {
+    return <div className="text-red-500">Error: {error}</div>;
   }
+
   return (
-    <AuthContext.Provider value={{ user, loading }}>
+    <AuthContext.Provider value={{ user, loading, error }}>
       {children}
     </AuthContext.Provider>
   );
