@@ -38,3 +38,11 @@ export interface Token {
   status: TokenStatus;
   type: TokenType;
 }
+
+export interface DisplayToken {
+  id: string;
+  tokenNumber: string;
+  department: string;
+  category: TokenCategory;
+  status: TokenStatus;
+}
