@@ -1,73 +1,75 @@
-# React + TypeScript + Vite
+# टोकन - A step towards digitalized healthcare system in Goa
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Project Overview
 
-Currently, two official plugins are available:
+"टोकन" is a digital token and queue management system designed specifically for Outpatient Departments (OPDs) in government hospitals. The primary goal of this project is to modernize and streamline the patient flow process, replacing traditional manual token systems with an efficient digital solution. This system aims to reduce waiting times, improve patient experience, and enhance the overall operational efficiency of OPDs.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Key Features
 
-## React Compiler
+### Implemented
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+*   **Digital Token Generation:** Patients can obtain digital tokens, eliminating the need for physical tokens.
+*   **Patient Interface:** Facilitates smooth communication and patient calling for doctors.
+*   **Admin Dashboard:** Provides an overview and control over the system for administrators.
+*   **Counter Console:** Manages token distribution and patient check-in at various counters.
 
-## Expanding the ESLint configuration
+### Yet to be Implemented
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+*   **Real-time Updates:** Patients can view their queue status and estimated waiting times.
+*   **Queue Management:** Real-time tracking and management of patient queues.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Technologies Used
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+*   **Frontend:** React, Tailwind CSS
+*   **Backend:** Node.js, Express.js
+*   **Real-time Communication & Authentication:** Firebase
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## Getting Started
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+To get a local copy up and running, follow these simple steps.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### Prerequisites
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+*   npm
+
+    ```
+    npm install npm@latest -g
+    ```
+
+### Installation
+
+1.  Clone the repo
+
+    ```
+    git clone https://github.com/ushiecodes/gmc-token-system.git
+    ```
+
+2.  Install NPM packages
+
+    ```
+    npm install
+    ```
+
+## Roadmap
+
+See the [open issues](https://github.com/ushiecodes/gmc-token-system.git/issues) for a list of proposed features (and known issues).
+
+## Contributing
+
+Contributions are what make the open source community such an amazing place to be learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+
+1.  Fork the Project
+2.  Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3.  Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4.  Push to the Branch (`git push origin feature/AmazingFeature`)
+5.  Open a Pull Request
+
+## License
+
+Distributed under the MIT License. See `LICENSE` for more information.
+
+## Contact
+
+Utkarsh Kamat  
+Email - work.utkarshkamat@gmail.com  
+Project Link: [https://github.com/ushiecodes/gmc-token-system.git](https://github.com/your_username_/Project-Name)
